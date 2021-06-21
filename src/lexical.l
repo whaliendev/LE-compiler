@@ -39,6 +39,7 @@ FLOAT               {digit}+"."{digit}+|{digit}*"."{digit}+[eE][+-]?{digit}+|{di
 
 {ws}+               { ; }
 \n|\r               { yycolumn = 1; }
+\n                  { yylval.node=newTokenNOde(yylineno, TOKEN_OTHER, "NEWLINE", yytext); return NEWLINE; }
 {RELOP}             { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "RELOP", yytext); return RELOP; }
 
 {PLUS}              { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "PLUS", yytext); return PLUS; }
