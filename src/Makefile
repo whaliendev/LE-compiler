@@ -5,6 +5,7 @@
 #	0.1  添加lex、syn、syn-c、parser、clean 目标
 #	0.2  添加test目标
 #	0.3  添加scanner目标
+#   0.4  delete scanner target
 
 # 编译器设定和编译选项
 CC = gcc -g
@@ -26,10 +27,6 @@ YFO = $(YFC:.c=.o)
 parser: syntax $(filter-out $(LFO),$(OBJS))
 	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) -lfl
 	mv parser ./bin
-
-scanner: lex
-	$(CC) -c $(LFC) lex-main.c -o scanner
-	mv scanner ./bin
 
 syn: lex syn-c
 	$(CC) -c $(YFC) -o $(YFO)
