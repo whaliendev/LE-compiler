@@ -42,8 +42,10 @@ syn-c: $(YFILE)
 .PHONY: clean test
 test: 
 	./parser ../tests/test1.txt
-	@echo -e "\n---------------"
+	@echo "\n------------------"
 	./parser ../tests/test2.txt
+	@echo "\n------------------"
+	./parser ../tests/test3.txt
 
 clean: 
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
