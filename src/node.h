@@ -15,6 +15,7 @@
 // node type declaration
 typedef struct node {
     int lineNo;         // line no.
+    size_t strLen;         // length of strVal
     NodeType type;      // node type
     char* name;         // node name
     union               // node value
@@ -51,7 +52,7 @@ static inline pNode newNode(int lineNo, NodeType type, char* name, char* yytext,
     curNode->lineNo = lineNo;
     curNode->type = type;
     strncpy(curNode->name, name, nameLength);
-    
+
     if (type==TOKEN_INT)
     {
         curNode->intVal=atoi(yytext);
@@ -61,6 +62,7 @@ static inline pNode newNode(int lineNo, NodeType type, char* name, char* yytext,
     }else if (type==TOKEN_OTHER)
     {
         curNode->strVal = yytext;
+        curNode->strLen=strlen(yytext);
     }else{
         char wMsg[] = "Not a token";
         curNode->strVal=wMsg;

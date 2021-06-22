@@ -74,39 +74,58 @@ Line:   NEWLINE                 { $$=newNode(@$.first_line, NOT_A_TOKEN, "Line",
 
 Exp:    Exp PLUS Exp            { 
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3); 
-        $$->floatVal=$1->floatVal+$2->floatVal; 
+        $$->floatVal=$1->floatVal+$3->floatVal; 
     }
     |   Exp MINUS Exp           {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
-        $$->floatVal=$1->floatVal-$2->floatVal;
+        $$->floatVal=$1->floatVal-$3->floatVal;
     }
     |   Exp STAR Exp            {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
-        $$->floatVal=$1->floatVal*$2->floatVal;
+        $$->floatVal=$1->floatVal*$3->floatVal;
     }
     |   Exp DIV Exp             {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1,  $2, $3);
-        $$->floatVal=$1->floatVal/$2->floatVal;
+        $$->floatVal=$1->floatVal/$3->floatVal;
     }
     |   Exp AND Exp             {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
-        $$->floatVal=$1->floatVal&&$2->floatVal;
+        $$->floatVal=$1->floatVal&&$3->floatVal;
     }
     |   Exp OR Exp              {
         $$=newNode(@$.first_line,  NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
-        $$->floatVal=$1->floatVal||$2->floatVal;
+        $$->floatVal=$1->floatVal||$3->floatVal;
     }
     |   Exp RELOP Exp           {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
-        // printf("%s %ld\n", $2->strVal, strlen($2->strVal));
+        int len = $2->strLen;
+        char *op=(char *)malloc(sizeof(char)*len);
+        strncpy(op, $2->strVal, len);
+        // printf("op: %s\n", op);
+        // printf("1: %f, 2: %f\n", $1->floatVal, $3->floatVal);
+        if(strcmp(op, "==")==0){
+            $$->floatVal=($1->floatVal-$3->floatVal<1e-6);
+        }else if(strcmp(op, "!=")==0){
+            $$->floatVal=!($1->floatVal-$3->floatVal<1e-6);
+        }else if(strcmp(op, ">")==0){
+            $$->floatVal=($1->floatVal>$3->floatVal);
+        }else if(strcmp(op, "<")==0){
+            $$->floatVal=($1->floatVal<$3->floatVal);
+        }else if(strcmp(op, ">=")==0){
+            $$->floatVal=($1->floatVal>=$3->floatVal);
+        }else{
+            $$->floatVal=($1->floatVal<=$3->floatVal);
+        }
+        // printf("floatVal: %f\n", $$->floatVal);
+        free(op);
     }
     |   MINUS Exp               {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 2, $1, $2);
-        $$->floatVal=-$1->floatVal;
+        $$->floatVal=-$2->floatVal;
     }
     |   NOT Exp                 {
         $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 2, $1, $2);
-        $$->floatVal=!$1->floatVal;
+        $$->floatVal=!$2->floatVal;
     }
     |   LP Exp RP               {
         $$=newNode(@$.first_line,  NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
