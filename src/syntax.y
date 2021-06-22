@@ -2,8 +2,12 @@
     #include <stdio.h>
     #include "node.h"
     #include "lex.yy.c"
+    #include "enum.h"
     #define YYERROR_VERBOSE 1
     pNode root;
+    int skipNum=0;
+    extern int yyerror(char const *msg);
+    unsigned lexError=0;
 %}
 
 // type
@@ -28,37 +32,101 @@
 %type <node> Input
 %type <node> Line
 %type <node> Exp
+%type <node> Start
+
+// precedence and associativity
+%left AND OR
+%left RELOP
+%left PLUS MINUS
+%left STAR DIV
+%right NOT
+%left LP RP
+
+
+%%
+Start:  Input                   { 
+        $$ = newNode(@$.first_line, NOT_A_TOKEN, "Start", NULL, 1, $1); 
+        root=$$; 
+    }
+    ;
+
+Input: /* empty string */       { $$=newNode(@$.first_line,  NOT_A_TOKEN, "Input", NULL, 0); }
+    |   Input Line              { 
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Input", NULL, 2, $1, $2); 
+        if(!lexError&&$2!=NULL&&$2->child!=NULL&&$2->child->next!=NULL){
+            $$->floatVal=$2->floatVal; 
+            printf("Output: %s, %d\n", 
+                $$->floatVal==0?"false":"true", skipNum); 
+        }
+        skipNum=0; 
+    }
+    ;
+
+Line:   NEWLINE                 { $$=newNode(@$.first_line, NOT_A_TOKEN, "Line", NULL, 1, $1); }            
+    |   Exp NEWLINE             { 
+            $$=newNode(@$.first_line, NOT_A_TOKEN, "Line", NULL, 2, $1, $2); 
+            if($1!=NULL){
+                $$->floatVal=$1->floatVal; 
+            }
+        }
+    |   error NEWLINE           { ; }
+    ;
+
+Exp:    Exp PLUS Exp            { 
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3); 
+        $$->floatVal=$1->floatVal+$2->floatVal; 
+    }
+    |   Exp MINUS Exp           {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        $$->floatVal=$1->floatVal-$2->floatVal;
+    }
+    |   Exp STAR Exp            {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        $$->floatVal=$1->floatVal*$2->floatVal;
+    }
+    |   Exp DIV Exp             {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1,  $2, $3);
+        $$->floatVal=$1->floatVal/$2->floatVal;
+    }
+    |   Exp AND Exp             {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        $$->floatVal=$1->floatVal&&$2->floatVal;
+    }
+    |   Exp OR Exp              {
+        $$=newNode(@$.first_line,  NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        $$->floatVal=$1->floatVal||$2->floatVal;
+    }
+    |   Exp RELOP Exp           {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        // printf("%s %ld\n", $2->strVal, strlen($2->strVal));
+    }
+    |   MINUS Exp               {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 2, $1, $2);
+        $$->floatVal=-$1->floatVal;
+    }
+    |   NOT Exp                 {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 2, $1, $2);
+        $$->floatVal=!$1->floatVal;
+    }
+    |   LP Exp RP               {
+        $$=newNode(@$.first_line,  NOT_A_TOKEN, "Exp", NULL, 3, $1, $2, $3);
+        $$->floatVal=$2->floatVal;
+    }
+    |   INT                     {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 1, $1);
+        $$->floatVal=$1->intVal;
+    }
+    |   FLOAT                   {
+        $$=newNode(@$.first_line, NOT_A_TOKEN, "Exp", NULL, 1, $1);
+        $$->floatVal=$1->floatVal;
+    }
+    |   error RP                { ; }
+    ;
 
 %%
 
-Input: /* empty string */
-    |   Input NEWLINE
-    |   error NEWLINE
-    ;
 
-Line:   NEWLINE
-    |   Exp NEWLINE
-    |   error NEWLINE
-    ;
-
-Exp:    Exp PLUS Exp
-    |   Exp MINUS Exp
-    |   Exp STAR Exp
-    |   Exp DIV Exp
-    |   Exp AND Exp
-    |   Exp OR Exp
-    |   Exp RELOP Exp
-    |   MINUS Exp
-    |   NOT Exp
-    |   LP Exp RP
-    |   INT
-    |   FLOAT
-    |   error RP
-    ;
-
-%%
-
-
-void yyerror(char const* msg){
-    fprintf(stderr, "Syntax error at line %d: %s.\n", yylineno, msg);
+int yyerror(char const *msg){
+    fprintf(stderr, "\033[;31mError at line %d: %s\033[0m\n", yylineno, msg);
+    return 1;
 }

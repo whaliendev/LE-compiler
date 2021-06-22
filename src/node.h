@@ -24,8 +24,8 @@ typedef struct node {
         char* strVal;
     };
 
-    struct node* child; // first child node of non-terminals node
-    struct node* next;  // next brother node of non-terminals node
+    struct node* child; // first child node of non-terminal node
+    struct node* next;  // next brother node of non-terminal node
 }Node;
 
 typedef Node* pNode;
@@ -34,8 +34,9 @@ typedef Node* pNode;
  * @brief create a new grammar tree node
  * @param yytext: set yytext to NULL if creating a new grammar tree node,
  *                  set yytext to str value when creating a lex node
-*/
+ */
 static inline pNode newNode(int lineNo, NodeType type, char* name, char* yytext, int argc, ...){
+    // printf("%s\n", name);
     pNode curNode = NULL;
     int nameLength = strlen(name) + 1;
 
@@ -59,27 +60,29 @@ static inline pNode newNode(int lineNo, NodeType type, char* name, char* yytext,
         curNode->floatVal=atof(yytext);
     }else if (type==TOKEN_OTHER)
     {
-        curNode->strVal = name;
+        curNode->strVal = yytext;
     }else{
         char wMsg[] = "Not a token";
-        curNode->strVal = wMsg;
+        curNode->strVal=wMsg;
     }
 
-    va_list vaList;
-    va_start(vaList, argc);
-    
-    pNode tempNode = va_arg(vaList, pNode);
+    if(argc>0){
+        va_list vaList;
+        va_start(vaList, argc);
+        
+        pNode tempNode = va_arg(vaList, pNode);
 
-    curNode->child = tempNode;
+        curNode->child = tempNode;
 
-    for(int i=1;i<argc;i++){
-        tempNode->next=va_arg(vaList, pNode);
-        if(tempNode->next!=NULL){
-            tempNode = tempNode->next;
+        for(int i=1;i<argc;i++){
+            tempNode->next=va_arg(vaList, pNode);
+            if(tempNode->next!=NULL){
+                tempNode = tempNode->next;
+            }
         }
-    }
 
-    va_end(vaList);
+        va_end(vaList);
+    }
     return curNode;
 }
 
@@ -99,7 +102,6 @@ static inline void delNode(pNode node){
         delNode(temp);
     }
     free(node->name);
-    if(node->strVal)    free(node->strVal);
     node=NULL;
 }
 

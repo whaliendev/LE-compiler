@@ -5,7 +5,8 @@
 #	0.1  添加lex、syn、syn-c、parser、clean 目标
 #	0.2  添加test目标
 #	0.3  添加scanner目标
-#   0.4  delete scanner target
+#	0.4  delete scanner target
+#	0.5  增加了test
 
 # 编译器设定和编译选项
 CC = gcc -g
@@ -24,9 +25,8 @@ LFO = $(LFC:.c=.o)
 YFO = $(YFC:.c=.o)
 
 
-parser: syntax $(filter-out $(LFO),$(OBJS))
-	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) -lfl
-	mv parser ./bin
+parser: syn $(filter-out $(LFO),$(OBJS))
+	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) -lfl 
 
 syn: lex syn-c
 	$(CC) -c $(YFC) -o $(YFO)
@@ -41,7 +41,9 @@ syn-c: $(YFILE)
 
 .PHONY: clean test
 test: 
-	./bin/parser ../tests/test1.txt
+	./parser ../tests/test1.txt
+	@echo -e '\n'
+	./parser ../tests/test2.txt
 
 clean: 
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
