@@ -13,7 +13,6 @@
         yylloc.last_column = yycolumn + yyleng-1; \
         yycolumn+=yyleng;
 
-    int relTot=0;
 %}
 
 %option yylineno
@@ -42,7 +41,7 @@ FLOAT               {digit}+"."{digit}+|{digit}*"."{digit}+[eE][+-]?{digit}+|{di
 
 {ws}+               { ; }
 \n                  { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "NEWLINE", yytext); return NEWLINE; yycolumn=1; }
-{RELOP}             { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "RELOP", yytext); relTot++; return RELOP; }
+{RELOP}             { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "RELOP", yytext); return RELOP; }
 
 {PLUS}              { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "PLUS", yytext); return PLUS; }
 {MINUS}             { yylval.node=newTokenNode(yylineno, TOKEN_OTHER, "MINUS", yytext); return MINUS; }

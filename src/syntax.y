@@ -4,12 +4,12 @@
     #include "lex.yy.c"
     #include "enum.h"
     #define YYERROR_VERBOSE 1
+    
     pNode root;
     int skipNum=0;
-    extern int yyerror(char const *msg);
     unsigned lexError=0;
-    extern int relTot;
 
+    extern int yyerror(char const *msg);
     void countSkip(pNode curNode);
 %}
 
