@@ -8,6 +8,9 @@
     int skipNum=0;
     extern int yyerror(char const *msg);
     unsigned lexError=0;
+    extern int relTot;
+
+    void countSkip(pNode curNode);
 %}
 
 // type
@@ -47,6 +50,7 @@
 Start:  Input                   { 
         $$ = newNode(@$.first_line, NOT_A_TOKEN, "Start", NULL, 1, $1); 
         root=$$; 
+        // if(!lexError)   printTreeInfo(root, 0);
     }
     ;
 
@@ -58,7 +62,7 @@ Input: /* empty string */       { $$=newNode(@$.first_line,  NOT_A_TOKEN, "Input
             printf("Output: %s, %d\n", 
                 $$->floatVal==0?"false":"true", skipNum); 
         }
-        skipNum=0; 
+        skipNum=0;
     }
     ;
 
@@ -68,6 +72,8 @@ Line:   NEWLINE                 { $$=newNode(@$.first_line, NOT_A_TOKEN, "Line",
             if($1!=NULL){
                 $$->floatVal=$1->floatVal; 
             }
+            // printTreeInfo($$, 0);
+            countSkip($$);
         }
     |   error NEWLINE           { ; }
     ;
@@ -148,4 +154,35 @@ Exp:    Exp PLUS Exp            {
 int yyerror(char const *msg){
     fprintf(stderr, "\033[;31mError at line %d: %s\033[0m\n", yylineno, msg);
     return 1;
+}
+
+void dfs(pNode curNode);
+
+void countSkip(pNode curNode){
+    if(curNode==NULL)   return;
+
+    if(strcmp(curNode->name, "Exp")==0&&curNode->next!=NULL
+        &&strcmp(curNode->next->name, "AND")==0&&curNode->floatVal-0<1e-6){
+        dfs(curNode->next);
+    }
+
+    if(strcmp(curNode->name, "Exp")==0&&curNode->next!=NULL
+        &&strcmp(curNode->next->name, "OR")==0&&curNode->floatVal!=0){
+        dfs(curNode->next);  
+    }
+
+    countSkip(curNode->child);
+    countSkip(curNode->next);
+}
+
+void dfs(pNode curNode){
+    if(curNode==NULL||curNode->counted)   return;
+
+    if(strcmp(curNode->name, "RELOP")==0){
+        skipNum++;
+        curNode->counted=1;
+    }
+
+    dfs(curNode->child);
+    dfs(curNode->next);
 }

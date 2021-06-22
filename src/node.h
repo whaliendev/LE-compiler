@@ -14,11 +14,12 @@
 
 // node type declaration
 typedef struct node {
-    int lineNo;         // line no.
-    size_t strLen;         // length of strVal
-    NodeType type;      // node type
-    char* name;         // node name
-    union               // node value
+    int lineNo;             // line no.
+    size_t strLen;          // length of strVal
+    NodeType type;          // node type
+    char* name;             // node name
+    unsigned int counted;   // counted before or not
+    union                   // node value
     {
         int intVal;
         float floatVal;
@@ -105,6 +106,23 @@ static inline void delNode(pNode node){
     }
     free(node->name);
     node=NULL;
+}
+
+static inline void printTreeInfo(pNode curNode, int height){
+    if(curNode==NULL)   return;
+
+    for(int i=0;i<height;i++){
+        printf("    ");
+    }
+    printf("%s", curNode->name);
+    if(curNode->type==NOT_A_TOKEN){
+        printf(" (%lf)", curNode->floatVal);
+    }else if(curNode->type==TOKEN_INT||curNode->type==TOKEN_FLOAT){
+        printf(": %lf", curNode->floatVal);
+    }
+    printf("\n");
+    printTreeInfo(curNode->child, height+1);
+    printTreeInfo(curNode->next, height);
 }
 
 #endif

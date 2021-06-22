@@ -42,7 +42,7 @@ syn-c: $(YFILE)
 .PHONY: clean test
 test: 
 	./parser ../tests/test1.txt
-	@echo -e '\n'
+	@echo -e "\n---------------"
 	./parser ../tests/test2.txt
 
 clean: 
