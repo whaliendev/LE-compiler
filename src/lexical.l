@@ -149,6 +149,7 @@ FLOAT               {digit}+"."{digit}+|{digit}*"."{digit}+[eE][+-]?{digit}+|{di
 {digit}+"."{digit}*[eE]         { printf("\033[;31mError at Line %d: lex error, illegal floating point number \"%s\"\033[0m\n", yylineno, yytext); lexError=1; }
 {digit}+[eE][+-]?{digit}*       { printf("\033[;31mError at Line %d: lex error, illegal floating point number \"%s\"\033[0m\n", yylineno, yytext); lexError=1; }
 "."[eE][+-]?{digit}+            { printf("\033[;31mError at Line %d: lex error, illegal floating point number \"%s\"\033[0m\n", yylineno, yytext); lexError=1; }
+{letter}+                       { printf("\033[;31mError at Line %d: lex error, mysterious characters \'%s\'\033[0m\n", yylineno, yytext); lexError=1; }
 .                               { printf("\033[;31mError at Line %d: lex error, mysterious character \'%s\'\033[0m\n", yylineno, yytext); lexError=1; }
 
 %%
