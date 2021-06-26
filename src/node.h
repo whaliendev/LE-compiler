@@ -56,7 +56,7 @@ static inline pNode newNode(int lineNo, NodeType type, char* name, char* yytext,
 
     if (type==TOKEN_INT)
     {
-        curNode->intVal=atoi(yytext);
+        if(yytext)  curNode->intVal=atoi(yytext);
     }else if (type==TOKEN_FLOAT)
     {
         curNode->floatVal=atof(yytext);
