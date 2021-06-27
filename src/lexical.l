@@ -41,7 +41,6 @@ FLOAT               {digit}+"."{digit}+|{digit}*"."{digit}+[eE][+-]?{digit}+|{di
 %%
 "/*"[^\*]*[\*]+([^\*/][^\*]*[\*]+)*"/"  { 
     if(!lexError) {
-        printf("\n");
         ECHO; 
         printf("\n"); 
     } 
@@ -58,7 +57,6 @@ FLOAT               {digit}+"."{digit}+|{digit}*"."{digit}+[eE][+-]?{digit}+|{di
 
 "//".*              { 
     if(!lexError) {
-        printf("\n");
         ECHO; 
         printf("\n"); 
     } 

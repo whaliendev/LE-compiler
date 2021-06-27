@@ -8,6 +8,7 @@
 #	0.4  delete scanner target
 #	0.5  增加了test
 #   0.6  update test target
+#   0.7  add test one file in test target
 
 # 编译器设定和编译选项
 CC = gcc -g
@@ -42,12 +43,18 @@ syn-c: $(YFILE)
 
 .PHONY: clean test
 test: 
+	# only test one file
+	# ./parser ../tests/test3.txt
+
+	# test all the files in folder ../tests/
 	for file in ../tests/*; \
 	do \
 		if test -f $$file; \
 		then \
-			@echo -e "\n-------------------------"; \
+			echo "-------------------------"; \
+			echo $$file; \
 			./parser $$file; \
+			echo; \
 		fi \
 	done
 

@@ -21,15 +21,22 @@
 // terminal tokens
 %token <node> INT FLOAT
 
+%token <node> NEWLINE
+
+%token <node> OR
+
+%token <node> AND
+
 %token <node> RELOP
 
-%token <node> PLUS MINUS STAR DIV
+%token <node> PLUS MINUS 
 
-%token <node> AND OR NOT
+%token <node> STAR DIV
+
+%token <node> NOT
 
 %token <node> LP RP
 
-%token <node> NEWLINE
 
 // non-terminal tokens
 %type <node> Input
@@ -38,7 +45,8 @@
 %type <node> Start
 
 // precedence and associativity
-%left AND OR
+%left OR
+%left AND
 %left RELOP
 %left PLUS MINUS
 %left STAR DIV

@@ -1,5 +1,8 @@
-! ( 3 > 2 || ( 13 < 19 || 1 < 2 ) ) 
-
-/*
-Output: false, 2
-*/
+// test for error message prompt
+0xg<3&&3<2
+080>7 && 2<3
+001>3
+3..2<2
+2<3.e
+2<3ee2
+abcdefg
