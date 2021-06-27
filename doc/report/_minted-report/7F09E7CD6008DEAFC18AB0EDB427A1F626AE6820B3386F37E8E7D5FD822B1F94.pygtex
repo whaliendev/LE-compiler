@@ -1,0 +1,19 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{c+c1}{// node type declaration}
+    \PYG{k}{typedef} \PYG{k}{struct} \PYG{n+nc}{node} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{lineNo}\PYG{p}{;}             \PYG{c+c1}{// line no.}
+        \PYG{k+kt}{size\PYGZus{}t} \PYG{n}{strLen}\PYG{p}{;}          \PYG{c+c1}{// length of strVal}
+        \PYG{n}{NodeType} \PYG{n}{type}\PYG{p}{;}          \PYG{c+c1}{// node type}
+        \PYG{k+kt}{char}\PYG{o}{*} \PYG{n}{name}\PYG{p}{;}             \PYG{c+c1}{// node name}
+        \PYG{k+kt}{unsigned} \PYG{k+kt}{int} \PYG{n}{counted}\PYG{p}{;}   \PYG{c+c1}{// counted before or not}
+        \PYG{k}{union}                   \PYG{c+c1}{// node value}
+        \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{intVal}\PYG{p}{;}
+            \PYG{k+kt}{float} \PYG{n}{floatVal}\PYG{p}{;}
+            \PYG{k+kt}{char}\PYG{o}{*} \PYG{n}{strVal}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{};}
+
+        \PYG{k}{struct} \PYG{n+nc}{node}\PYG{o}{*} \PYG{n}{child}\PYG{p}{;} \PYG{c+c1}{// first child node of non\PYGZhy{}terminal node}
+        \PYG{k}{struct} \PYG{n+nc}{node}\PYG{o}{*} \PYG{n}{next}\PYG{p}{;}  \PYG{c+c1}{// next brother node of non\PYGZhy{}terminal node}
+    \PYG{p}{\PYGZcb{}}\PYG{n}{Node}\PYG{p}{;}
+\end{Verbatim}

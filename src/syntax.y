@@ -80,7 +80,7 @@ Line:   NEWLINE                 { $$=newNode(@$.first_line, NOT_A_TOKEN, "Line",
             if($1!=NULL){
                 $$->floatVal=$1->floatVal; 
             }
-            // printTreeInfo($$, 0);
+            printTreeInfo($$, 0);
             countSkip($$);
         }
     |   error NEWLINE           { ; }

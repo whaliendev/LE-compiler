@@ -1,0 +1,351 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}%UTF-8编码，文字大小11，纸张类型A4
+\usepackage[T1]{fontenc}% 加载宏包 fontenc 防止某些符号显示不正常
+\usepackage{courier}
+
+\CTEXsetup[format={\Large\bfseries}]{section}
+
+\title{\vspace{-6em}LE-compiler实验报告\vspace{-2em}}
+\date{}
+
+\usepackage[textwidth=18cm]{geometry} % 设置页宽=18
+
+%加载数学宏包
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%加载插图宏包 graphicx 以在 pdf 中插入图片
+\usepackage{graphicx}
+
+\usepackage{blindtext}
+\usepackage{bm}
+
+% for table input
+\usepackage{makecell}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+% code input
+\usepackage{minted}
+\usepackage{xcolor}
+% \usepackage{listings}
+% \newfontfamily\courier{courier}
+% \lstset{linewidth=1.1\textwidth,
+% 	numbers=left, %设置行号位置 
+% 	basicstyle=\small\courier,
+% 	numberstyle=\tiny\courier, %设置行号大小  
+% 	keywordstyle=\color{blue}\courier, %设置关键字颜色  
+% 	%identifierstyle=\bf，
+% 	commentstyle=\it\color[cmyk]{1,0,1,0}\courier, %设置注释颜色 
+% 	stringstyle=\it\color[RGB]{128,0,0}\courier,
+% 	%framexleftmargin=10mm,
+% 	frame=single, %设置边框格式  
+% 	backgroundcolor=\color[RGB]{245,245,244},
+% 	%escapeinside=``, %逃逸字符(1左面的键)，用于显示中文  
+% 	breaklines, %自动折行  
+% 	extendedchars=false, %解决代码跨页时，章节标题，页眉等汉字不显示的问题  
+% 	xleftmargin=2em,xrightmargin=2em, aboveskip=1em, %设置边距  
+% 	tabsize=4, %设置tab空格数  
+% 	showspaces=false %不显示空格  
+% 	basicstyle=\small\courier
+% } 
+
+% pseudo code
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+\floatname{algorithm}{算法}
+\renewcommand{\algorithmicrequire}{\textbf{输入：}}
+\renewcommand{\algorithmicensure}{\textbf{输出：}}
+
+\parindent=0pt
+
+\begin{document}
+\maketitle
+
+\section{功能}\label{section:feat}
+\begin{itemize}
+    \item 逻辑表达式求值
+    \item 计算因为短路跳过的\textbf{比较}次数
+    \item 类似C语言语法的四则运算支持
+    \item 一次测试多个逻辑表达式（但出现语法错误后不能够恢复）
+    \item 命令行测试和测试文件测试
+\end{itemize}
+
+\section{设计方案}
+\hspace{2em}为了满足如上所述的功能，我的实验需要在原来的要求上进一步支持：四则运算以及相关报错的词法设计、文件和命令行测试。为此，
+我设计了如下的词法和语法：
+\subsection{词法设计方案}
+\begin{center}
+    \begin{longtable}{l|l|l}
+        \toprule
+        词法记号&正则表达式&备注\\
+        \hline
+        RELOP & >|<|>=|<=|==|!= & 关系运算符  \\
+        \hline
+        PLUS & "+" & 加号\\
+        \hline
+        MINUS & "-" & 减号\\
+        \hline
+        STAR & "*" & 乘号\\
+        \hline
+        DIV & "/" & 除号（真除法）\\
+        \hline
+        AND & "\&\&" & 与运算符\\
+        \hline
+        OR & "||" & 或运算符\\
+        \hline
+        NOT & "!" & 非运算符\\
+        \hline
+        LP & "(" & 左括号\\
+        \hline
+        RP & ")" & 右括号\\
+        \hline
+        INT & 0|[1-9]+[0-9]* & 整形\\
+        \hline
+        INT8 & 0[0-7]+ & 八进制整形\\
+        \hline
+        INT16 & 0[xX][0-9a-fA-F]+ & 十六进制整形\\
+        \hline
+        WINT8 & 0({digit}|{letter})+ & \makecell[l]{错误的八进制整形\\（词法错误提示用）}\\
+        \hline
+        WINT16 & 0[xX]({digit}|{letter})+& \makecell[l]{错误的十六进制整形\\ （词法错误提示用）}\\
+        \hline
+        WINT & {digit}*|{digit}+({digit}|[a-zA-Z])+ & 错误的整形（词法错误提示用）\\
+        \hline
+        FLOAT & \makecell[l]{
+            {digit}+"."{digit}+ | \\
+            {digit}*"."{digit}+[eE][+-]?{digit}+ | \\
+            {digit}+"."{digit}*[eE][+-]?{digit}+ \\
+            }
+            & 浮点数（支持科学计数法）\\
+        \bottomrule
+    \end{longtable}
+\end{center}
+\hspace{2em}如上表所示，我设计了四则运算所用的所有符号和数值的词法，并且支持了整形、浮点数格式错误的词法提示。
+此外，在词法分析的时候，我就进行了一定的语义处理。我使用枚举量\mintinline{C}{NodeType}来对不同的token进行区分。
+如果NodeType为Token\_Int，则将yytext转化为int并赋值给对应词法记号的intVal属性；如果NodeType为Token\_Float，则
+将yytext转化为float并赋值给对应的词法记号的floatVal属性；如果NodeType为Token\_Other类型，则将yytext直接赋值给strVal属性。
+
+
+\subsection{语法语义设计方案}
+\subsubsection{数据结构设计}
+为了解决四则运算的语义问题以及计算因短路运算跳过的比较次数，我设计了如下的数据类型：
+\begin{minted}[]{C}
+    // node type declaration
+    typedef struct node {
+        int lineNo;             // line no.
+        size_t strLen;          // length of strVal
+        NodeType type;          // node type
+        char* name;             // node name
+        unsigned int counted;   // counted before or not
+        union                   // node value
+        {
+            int intVal;
+            float floatVal;
+            char* strVal;
+        };
+
+        struct node* child; // first child node of non-terminal node
+        struct node* next;  // next brother node of non-terminal node
+    }Node;
+\end{minted}
+\hspace{2em}其中，lineNo是词法或语法错误位置，strLen是strVal的长度（如果strVal不为空），type为NodeType枚举类型，counted表示是否计算过（用来计算跳过的比较次数），child和
+next分别表示当前结点的孩子结点和兄弟结点。自然而然的，bison栈中的数据类型即为Node指针类型pNode。
+
+\subsubsection{语法语义设计}
+\hspace{2em}根据如上的数据结构我们可以知道，我为每个非终结符设计了child、next、floatVal三个综合属性，同时为了简便处理，我们将TOKEN\_INT类型的词法记号
+的intVal直接赋值给floatVal属性；为每个非终结符设计了lexeme属性，其值为其语义本身（即Token\_Int类型为整数，Token\_Float类型为浮点数, Token\_Other类型为字符串，存储在strVal属性中）。
+
+\hspace{2em}由于支持四则运算后语法制导定义过长，限于篇幅，我将SSD放在了第\pageref{SSD}页附录SSD部分。
+
+
+\subsection{难点与解决方案}
+\hspace{2em}经过以上的词法语法语义设计，我们能很简单的得到逻辑表达式的真值（即Line.floatVal!=0)。我遇到的难点便成了如何计算因为短路运算跳过的次数。
+由于我没能设计出一个比较好的语义制导定义，又考虑到我采用了多叉树来表示整个输入，我最后选择使用深度优先遍历的方式来求解因为短路运算跳过的比较次数。算法可以表示成如后述伪代码。
+\par{\hspace{2em}简单的来说就是： 每当当前节点为Exp，其兄弟结点为AND或OR，并且短路条件成立，则跳到其兄弟节点进行深度优先遍历，统计跳过的RELOP，并将该结点标记为访问过。}
+\begin{algorithm}
+    \caption{计算因短路运算跳过的比较次数}
+    \begin{algorithmic}[1]
+        \Require $Node*\ curNode$需要计算的结点指针
+        \Ensure $curNode$非空
+        \Function {countSkip}{$Node*\ curNode$}
+            \If {$curNode != NULL$}
+                \State \Return{}
+            \EndIf
+
+            \If{oper of Exp equals to "AND" and short circuit}
+                \State \Call{dfs}{curNode.next}
+            \EndIf
+
+            \If{oper of Exp equals to "OR" and short circuit}
+                \State \Call{dfs}{$curNode.next$}
+            \EndIf
+
+            \State \Call{countSkip}{$curNode.child$}
+            \State \Call{countSkip}{$curNode.next$}
+        \EndFunction
+        \State
+        \Function{dfs}{$Node*\ curNode$}
+            \If{curNode==NULL or curNode.counted==True}
+                \State \Return{}
+            \EndIf
+
+            \If{curNode.name=="RELOP"==0}
+                \State $skipNum=skipNum+1$
+                \State $curNode.counted \gets 1$
+            \EndIf
+
+            \State \Call{dfs}{$curNode.child$}
+            \State \Call{dfs}{$curNode.next$}
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\section{构建和测试}
+我使用了make管理项目。因此，进入src源代码目录后，make便可构建生成可执行程序parser，make test便可执行自动测试。
+\begin{minted}[]{shell}
+    cd src
+    # 构建
+    make
+    # 自动化测试
+    make test
+    # 命令行测试
+    ./parser
+\end{minted}
+
+
+\newpage
+\appendix{附录}\label{SSD}
+\section{语法制导定义}
+\begin{center}
+    \begin{longtable}{l|l}
+        产生式&语义规则 \\
+        \hline
+        Start $ \rightarrow $ Input& \makecell[l]{Start.child = Input \\ root=Start}\\
+        \hline
+        Input $ \rightarrow \ Input_1$ Line & \makecell[l]{
+            Input.child = $Input_1$ \\
+            Input.next=Line \\
+            \textbf{if} Line != NULL and Line.child != NULL and Line.next !=NULL 
+            \textbf{then}\\
+            \hspace{2em} Input.floatVal = Line.floatVal\\
+            \hspace{2em} printf("Output: \%s, \%d", \\
+            \hspace{8em}Input->floatVal==0?"false":"true", skipNum) \\
+            skipNum=0
+            }\\
+        \hline
+        Input $ \rightarrow\ \epsilon $ & \makecell[l]{
+            Input=NULL 
+        }\\
+        \hline
+        Line $ \rightarrow $ NEWLINE &  \makecell[l]{
+            Line.child=NEWLINE
+        }\\
+        \hline
+        Line $ \rightarrow $ Exp NEWLINE & \makecell[l]{
+            Line.child=Exp\\
+            Line.next=NEWLINE\\
+            \textbf{if} Exp!=NULL 
+            \textbf{then}\\
+            \hspace{2em}Line.floatVal=Exp.floatVal
+            countSkip(Line)
+        }\\
+        \hline
+        Exp $\rightarrow $ $Exp_1$ PLUS $Exp_2$ &  \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=PLUS\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal\ + \ Exp_2.floatVal$
+        }\\
+        \hline
+        Exp $\rightarrow $ $Exp_1$ MINUS $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=MINUS\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal\ - \ Exp_2.floatVal$
+        }\\
+        \hline
+        Exp $\rightarrow $ $Exp_1$ STAR $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=STAR\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal\ * \ Exp_2.floatVal$
+        }\\
+        \hline
+        Exp $\rightarrow $ $Exp_1$ DIV $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=DIV\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal\ / \ Exp_2.floatVal$
+        }\\
+        \hline 
+        Exp $\rightarrow $ $Exp_1$ AND $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=AND\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal$ \&\& $Exp_2.floatVal$
+        }\\
+        \hline 
+        Exp $\rightarrow $ $Exp_1$ OR $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=OR\\
+            Exp.next.next=$Exp_2$\\
+            Exp.floatVal = $Exp_1.floatVal$ || $Exp_2.floatVal$\\
+        }\\
+        \hline 
+        Exp $\rightarrow $ $Exp_1$ RELOP $Exp_2$ & \makecell[l]{
+            Exp.child=$Exp_1$\\
+            Exp.next=RELOP\\
+            Exp.next.next=$Exp_2$\\
+            \textbf{if} RELOP.strVal == "=="\\
+            \textbf{then} \\
+            \hspace{2em}Exp.floatVal=$Exp_1$.floatVal-$Exp_2$.floatVal<1e-6\\
+            \textbf{elif} RELOP.strVal == "!="\\
+            \textbf{then} \\
+            \hspace{2em}Exp.floatVal=$Exp_1$.floatVal-$Exp_2$.floatVal>=1e-6\\
+            \textbf{elif} RELOP.strVal == ">"\\
+            \textbf{then} \\
+            \hspace{2em}RELOP.floatVal=$Exp_1$.floatVal>$Exp_2$.floatVal\\
+            \textbf{elif} RELOP.strVal == "<"\\
+            \textbf{then} \\
+            \hspace{2em}RELOP.floatVal=$Exp_1$.floatVal<$Exp_2$.floatVal\\
+            \textbf{elif} RELOP.strVal == ">="\\
+            \textbf{then} \\
+            \hspace{2em}RELOP.floatVal=$Exp_1$.floatVal>=$Exp_2$.floatVal\\
+            \textbf{else} \\
+            \hspace{2em}RELOP.floatVal=$Exp_1$.floatVal<=$Exp_2$.floatVal
+        }\\
+        \hline
+        Exp $\rightarrow $ MINUS $Exp_1$ & \makecell[l]{
+            Exp.child=MINUS\\
+            Exp.next=$Exp_1$\\
+            Exp.floatVal=-$Exp_1$.floatVal
+        }\\
+        \hline 
+        Exp $ \rightarrow $ NOT $Exp_1$ & \makecell[l]{
+            Exp.child=MINUS\\
+            Exp.next=$Exp_1$\\
+            Exp.floatVal=!$Exp_1$.floatVal
+        }\\
+        \hline
+        Exp $ \rightarrow $ LP $Exp_1$ RP & \makecell[l]{
+            Exp.child=LP\\
+            Exp.next=$Exp_1$\\
+            Exp.next.next=RP\\
+            Exp.floatVal=$Exp_1$.floatVal
+        }\\
+        \hline 
+        Exp $ \rightarrow $ INT & \makecell[l]{
+            Exp.child=INT\\
+            Exp.floatVal=INT.lexeme\\
+        }\\
+        \hline
+        Exp $ \rightarrow $ FLOAT & \makecell[l]{
+            Exp.child=FLOAT\\
+            Exp.floatVal=FLOAT.lexeme\\
+        }\\
+    \end{longtable}
+\end{center}
+
+\end{document}

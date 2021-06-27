@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{n+nb}{cd} src
+    \PYG{c+c1}{\PYGZsh{} 构建}
+    make
+    \PYG{c+c1}{\PYGZsh{} 自动化测试}
+    make \PYG{n+nb}{test}
+    \PYG{c+c1}{\PYGZsh{} 命令行测试}
+    ./parser
+\end{Verbatim}
