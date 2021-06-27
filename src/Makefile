@@ -7,6 +7,7 @@
 #	0.3  添加scanner目标
 #	0.4  delete scanner target
 #	0.5  增加了test
+#   0.6  update test target
 
 # 编译器设定和编译选项
 CC = gcc -g
@@ -41,11 +42,14 @@ syn-c: $(YFILE)
 
 .PHONY: clean test
 test: 
-	./parser ../tests/test1.txt
-	@echo "\n------------------"
-	./parser ../tests/test2.txt
-	@echo "\n------------------"
-	./parser ../tests/test3.txt
+	for file in ../tests/*; \
+	do \
+		if test -f $$file; \
+		then \
+			@echo -e "\n-------------------------"; \
+			./parser $$file; \
+		fi \
+	done
 
 clean: 
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
